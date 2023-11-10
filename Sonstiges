@@ -1,0 +1,697 @@
+##DATENBEARBEITUNG MASTERARBEIT SKRIPT 2
+install.packages("Hmisc")
+
+install.packages("table1")
+#load packages 
+library(readxl)
+library(tidyverse)
+library(psych)
+library(dplyr)
+library(Matrix)
+library(lme4)
+library(ggplot2)
+library(foreign)
+library(pwr)
+library(lsr)
+library(factoextra)
+library(writexl)
+library(survival)
+library(xlsx)
+library(table1)
+library(boot)
+library(Hmisc)
+
+view(data)
+view(NonresponderData)
+
+
+#ohne Non-Responder
+#Geschlecht --> 1 = weiblich, 0 = männlich
+data$Geschlecht <- as.factor(ifelse(data$Geschlecht ==1, "w", "m"))
+
+NonresponderData <- data[-c(1,2,4,8,10,11,12,13,14,17,22,28,30,31,36,37,38,39,40), ]
+
+
+
+
+#Long format erstellen
+vars_t1 <- c("Alter",
+             "Geschlecht",
+             "Aufenthaltsdauer",
+             "Nationalitaet",
+             "Traumaerfahrung",
+             "Diagnose",
+             "Hauptsubstanz",
+             "PDS1Intrusionen",
+             "PDS1Vermeidung",
+             "PDS1Hyperarousal",
+             "PDS1",
+             "ITQ1Wiedererleben",
+             "ITQ1Vermeidung",
+             "ITQ1GefuehlBedrohung",
+             "PTBS1",
+             "ITQ1AffektiveDysregulation",
+             "ITQ1NegativesSelbstbild",
+             "ITQ1ProblematischeBeziehungen",
+             "DSO1",
+             "GSI1",
+             "BSCL1Somatisierung",
+             "BSCL1Zwanghaftigkeit",
+             "BSCL1UnsicherheitSozialkontakt",
+             "BSCL1Depressivitaet",
+             "BSCL1Aengstlichkeit",
+             "BSCL1Aggressivitaet",
+             "BSCL1Psychotizismus",
+             "BSCL1ParanoidesDenken",
+             "BSCL1PhobischeAngst"
+             )
+
+vars_t2 <- c("Alter",
+             "Geschlecht",
+             "Aufenthaltsdauer",
+             "Nationalitaet",
+             "Traumaerfahrung",
+             "Diagnose",
+             "Hauptsubstanz",
+             "PDS2Intrusionen",
+             "PDS2Vermeidung",
+             "PDS2Hyperarousal",
+             "PDS2",
+             "ITQ2Wiedererleben",
+             "ITQ2Vermeidung",
+             "ITQ2GefuehlBedrohung",
+             "PTBS2",
+             "ITQ2AffektiveDysregulation",
+             "ITQ2NegativesSelbstbild",
+             "ITQ2ProblematischeBeziehungen",
+             "DSO2",
+             "GSI2",
+             "BSCL2Somatisierung",
+             "BSCL2Zwanghaftigkeit",
+             "BSCL2UnsicherheitSozialkontakt",
+             "BSCL2Depressivitaet",
+             "BSCL2Aengstlichkeit",
+             "BSCL2Aggressivitaet",
+             "BSCL2Psychotizismus",
+             "BSCL2ParanoidesDenken",
+             "BSCL2PhobischeAngst"
+)
+
+
+
+#Split Data
+data_t1 <- data[,vars_t1]
+data_t2 <- data[,vars_t2]
+
+NonresponderData_t1 <- NonresponderData[,vars_t1]
+NonresponderData_t2 <- NonresponderData[,vars_t2]
+
+colnames(data_t1) <-  c("Alter",
+                      "Geschlecht",
+                      "Aufenthalt",
+                      "Nationalitaet",
+                      "Traumaerfahrung",
+                      "Diagnose",
+                      "Hauptsubstanz",
+                      "PDSIntrusionen",
+                      "PDSVermeidung",
+                      "PDSHyperarousal",
+                      "PDS",
+                      "ITQWiedererleben",
+                      "ITQVermeidung",
+                      "ITQGefuehlBedrohung",
+                      "PTBS",
+                      "ITQAffektiveDysregulation",
+                      "ITQNegativesSelbstbild",
+                      "ITQProblematischeBeziehungen",
+                      "DSO",
+                      "GSI",
+                      "BSCLSomatisierung",
+                      "BSCLZwanghaftigkeit",
+                      "BSCLUnsicherheitSozialkontakt",
+                      "BSCLDepressivitaet",
+                      "BSCLAengstlichkeit",
+                      "BSCLAggressivitaet",
+                      "BSCLPsychotizismus",
+                      "BSCLParanoidesDenken",
+                      "BSCLPhobischeAngst"
+)
+
+colnames(data_t2) <-  c("Alter",
+                       "Geschlecht",
+                       "Aufenthalt",
+                       "Nationalitaet",
+                       "Traumaerfahrung",
+                       "Diagnose",
+                       "Hauptsubstanz",
+                       "PDSIntrusionen",
+                       "PDSVermeidung",
+                       "PDSHyperarousal",
+                       "PDS",
+                       "ITQWiedererleben",
+                       "ITQVermeidung",
+                       "ITQGefuehlBedrohung",
+                       "PTBS",
+                       "ITQAffektiveDysregulation",
+                       "ITQNegativesSelbstbild",
+                       "ITQProblematischeBeziehungen",
+                       "DSO",
+                       "GSI",
+                       "BSCLSomatisierung",
+                       "BSCLZwanghaftigkeit",
+                       "BSCLUnsicherheitSozialkontakt",
+                       "BSCLDepressivitaet",
+                       "BSCLAengstlichkeit",
+                       "BSCLAggressivitaet",
+                       "BSCLPsychotizismus",
+                       "BSCLParanoidesDenken",
+                       "BSCLPhobischeAngst"
+                       
+                      
+)
+
+colnames(NonresponderData_t1) <-  c("Alter",
+                        "Geschlecht",
+                        "Aufenthalt",
+                        "Nationalitaet",
+                        "Traumaerfahrung",
+                        "Diagnose",
+                        "Hauptsubstanz",
+                        "PDSIntrusionen",
+                        "PDSVermeidung",
+                        "PDSHyperarousal",
+                        "PDS",
+                        "ITQWiedererleben",
+                        "ITQVermeidung",
+                        "ITQGefuehlBedrohung",
+                        "PTBS",
+                        "ITQAffektiveDysregulation",
+                        "ITQNegativesSelbstbild",
+                        "ITQProblematischeBeziehungen",
+                        "DSO",
+                        "GSI",
+                        "BSCLSomatisierung",
+                        "BSCLZwanghaftigkeit",
+                        "BSCLUnsicherheitSozialkontakt",
+                        "BSCLDepressivitaet",
+                        "BSCLAengstlichkeit",
+                        "BSCLAggressivitaet",
+                        "BSCLPsychotizismus",
+                        "BSCLParanoidesDenken",
+                        "BSCLPhobischeAngst"
+)
+
+colnames(NonresponderData_t2) <-  c("Alter",
+                        "Geschlecht",
+                        "Aufenthalt",
+                        "Nationalitaet",
+                        "Traumaerfahrung",
+                        "Diagnose",
+                        "Hauptsubstanz",
+                        "PDSIntrusionen",
+                        "PDSVermeidung",
+                        "PDSHyperarousal",
+                        "PDS",
+                        "ITQWiedererleben",
+                        "ITQVermeidung",
+                        "ITQGefuehlBedrohung",
+                        "PTBS",
+                        "ITQAffektiveDysregulation",
+                        "ITQNegativesSelbstbild",
+                        "ITQProblematischeBeziehungen",
+                        "DSO",
+                        "GSI",
+                        "BSCLSomatisierung",
+                        "BSCLZwanghaftigkeit",
+                        "BSCLUnsicherheitSozialkontakt",
+                        "BSCLDepressivitaet",
+                        "BSCLAengstlichkeit",
+                        "BSCLAggressivitaet",
+                        "BSCLPsychotizismus",
+                        "BSCLParanoidesDenken",
+                        "BSCLPhobischeAngst"
+)
+
+
+
+#Add Time Var
+data_t1$time <- "T1"
+data_t2$time <- "T2"
+NonresponderData_t1$time <- "T1"
+NonresponderData_t2$time <- "T2"
+
+data_long <- rbind(data_t1,data_t2)
+NonresponderData_long <- rbind(NonresponderData_t1,NonresponderData_t2)
+
+
+view(data)
+
+#Tabelle über R erstellen
+
+#Namen der Variablen für die Tabelle umschreiben
+names(data_long)[names(data_long) == 'Aufenthalt'] <- 'Aufenthaltsdauer'
+names(NonresponderData_long)[names(NonresponderData_long) == 'Aufenthalt'] <- 'Aufenthaltsdauer'
+names(data)[names(data) == 'Aufenthalt'] <- 'Aufenthaltsdauer'
+names(NonresponderData)[names(NonresponderData) == 'Aufenthalt'] <- 'Aufenthaltsdauer'
+
+#Demographische Merkmale
+table1(~ Alter + 
+         Geschlecht + 
+         Aufenthaltsdauer + 
+         Aufenthaltsart + 
+         Nationalitaet + 
+         Zivilstand +
+         Diagnose + 
+         Hauptsubstanz, data=data)
+
+
+#Namen ändern
+names(data_long)[names(data_long) == 'PDS'] <- 'SymptomSeverityScore'
+names(data_long)[names(data_long) == 'PDSIntrusionen'] <- 'Intrusionen'
+names(data_long)[names(data_long) == 'PDSVermeidung'] <- 'VermeidungPDS'
+names(data_long)[names(data_long) == 'PDSHyperarousal'] <- 'Hyperarousal'
+names(data_long)[names(data_long) == 'ITQWiedererleben'] <- 'Wiedererleben'
+names(data_long)[names(data_long) == 'ITQVermeidung'] <- 'VermeidungITQ'
+names(data_long)[names(data_long) == 'ITQGefuehlBedrohung'] <- 'GefuehlvonBedrohung'
+names(data_long)[names(data_long) == 'ITQAffektiveDysregulation'] <- 'AffektiveDysregulation'
+names(data_long)[names(data_long) == 'ITQNegativesSelbstbild'] <- 'NegativesSelbstbild'
+names(data_long)[names(data_long) == 'ITQProblematischeBeziehungen'] <- 'ProblematischeBeziehungen'
+
+names(data_long)[names(data_long) == 'GSI'] <- 'GeneralSeverityIndex'
+names(data_long)[names(data_long) == 'BSCLSomatisierung'] <- 'Somatisierung'
+names(data_long)[names(data_long) == 'BSCLZwanghaftigkeit'] <- 'Zwanghaftigkeit'
+names(data_long)[names(data_long) == 'BSCLUnsicherheitSozialkontakt'] <- 'UnsicherheitImSozialkontakt'
+names(data_long)[names(data_long) == 'BSCLDepressivitaet'] <- 'Depressivitaet'
+names(data_long)[names(data_long) == 'BSCLAengstlichkeit'] <- 'Aengstlichkeit'
+names(data_long)[names(data_long) == 'BSCLAggressivitaet'] <- 'Aggressivitaet'
+names(data_long)[names(data_long) == 'BSCLPsychotizismus'] <- 'Psychotizismus'
+names(data_long)[names(data_long) == 'BSCLParanoidesDenken'] <- 'ParanoidesDenken'
+names(data_long)[names(data_long) == 'BSCLPhobischeAngst'] <- 'PhobischeAngst'
+
+names(NonresponderData_long)[names(NonresponderData_long) == 'PDS'] <- 'SymptomSeverityScore'
+names(NonresponderData_long)[names(NonresponderData_long) == 'PDSIntrusionen'] <- 'Intrusionen'
+names(NonresponderData_long)[names(NonresponderData_long) == 'PDSVermeidung'] <- 'VermeidungPDS'
+names(NonresponderData_long)[names(NonresponderData_long) == 'PDSHyperarousal'] <- 'Hyperarousal'
+names(NonresponderData_long)[names(NonresponderData_long) == 'ITQWiedererleben'] <- 'Wiedererleben'
+names(NonresponderData_long)[names(NonresponderData_long) == 'ITQVermeidung'] <- 'VermeidungITQ'
+names(NonresponderData_long)[names(NonresponderData_long) == 'ITQGefuehlBedrohung'] <- 'GefuehlvonBedrohung'
+names(NonresponderData_long)[names(NonresponderData_long) == 'ITQAffektiveDysregulation'] <- 'AffektiveDysregulation'
+names(NonresponderData_long)[names(NonresponderData_long) == 'ITQNegativesSelbstbild'] <- 'NegativesSelbstbild'
+names(NonresponderData_long)[names(NonresponderData_long) == 'ITQProblematischeBeziehungen'] <- 'ProblematischeBeziehungen'
+
+names(NonresponderData_long)[names(NonresponderData_long) == 'GSI'] <- 'GeneralSeverityIndex'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLSomatisierung'] <- 'Somatisierung'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLZwanghaftigkeit'] <- 'Zwanghaftigkeit'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLUnsicherheitSozialkontakt'] <- 'UnsicherheitImSozialkontakt'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLDepressivitaet'] <- 'Depressivitaet'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLAengstlichkeit'] <- 'Aengstlichkeit'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLAggressivitaet'] <- 'Aggressivitaet'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLPsychotizismus'] <- 'Psychotizismus'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLParanoidesDenken'] <- 'ParanoidesDenken'
+names(NonresponderData_long)[names(NonresponderData_long) == 'BSCLPhobischeAngst'] <- 'PhobischeAngst'
+
+
+
+#PrePost
+table1(~ SymptomSeverityScore +
+           Intrusionen +
+           VermeidungPDS +
+           Hyperarousal +
+           PTBS +
+           Wiedererleben +
+           VermeidungITQ +
+           GefuehlvonBedrohung +
+           DSO +
+           AffektiveDysregulation +
+           NegativesSelbstbild +
+           ProblematischeBeziehungen | time, data=data_long)
+
+table1(~ GeneralSeverityIndex +
+         Somatisierung +
+         Zwanghaftigkeit +
+         UnsicherheitImSozialkontakt +
+         Depressivitaet +
+         Aggressivitaet +
+         Aengstlichkeit +
+         Psychotizismus +
+         ParanoidesDenken +
+         PhobischeAngst | time, data=data_long)
+
+
+#Nonresp
+#Demographische Merkmale
+table1(~ Alter + 
+         Geschlecht + 
+         Aufenthaltsdauer + 
+         Aufenthaltsart + 
+         Nationalitaet + 
+         Zivilstand +
+         Diagnose + 
+         Hauptsubstanz, data=NonresponderData)
+
+NonresponderData_long
+
+install.packages("table1")
+library(table1)
+library(tidyr)
+
+#PrePost
+table1(~ SymptomSeverityScore +
+         Intrusionen +
+         VermeidungPDS +
+         Hyperarousal +
+         PTBS +
+         Wiedererleben +
+         VermeidungITQ +
+         GefuehlvonBedrohung +
+         DSO +
+         AffektiveDysregulation +
+         NegativesSelbstbild +
+         ProblematischeBeziehungen | time, data=NonresponderData_long)
+
+table1(~ GeneralSeverityIndex +
+         Somatisierung +
+         Zwanghaftigkeit +
+         UnsicherheitImSozialkontakt +
+         Depressivitaet +
+         Aggressivitaet +
+         Aengstlichkeit +
+         Psychotizismus +
+         ParanoidesDenken +
+         PhobischeAngst | time, data=NonresponderData_long)
+
+
+
+
+#Fragestellung 1
+
+#Paired Tests
+
+runTest <- function(pairs, data){
+  
+  #Neues Datenset erstellen
+  df_output <- data.frame()
+  
+  #Nr von Tests
+  nrows <- length(pairs)
+  
+  #Loop über die Testpaare
+  for (i in 1:nrows){
+    
+    pair <- pairs[[i]]
+    var1 <- pair[[1]]
+    var2 <- pair[[2]]
+    
+    print(var1)
+    
+    diff <- data[[var1]] - data[[var2]]
+    shapiroTest <- shapiro.test(diff)
+    
+    
+    wilk <- wilcox.test(data[[var1]],data[[var2]], paired = TRUE)
+    ttest <- t.test(data[[var1]],data[[var2]], paired = TRUE)
+    
+    cd_df <- data.frame("values" = c(data[[var1]],data[[var2]]), "group" = c(rep(1,length(data[[var1]])),rep(2,length(data[[var2]]))))
+    cohensd <- cohens_d(values ~ group, paired = TRUE, data =cd_df)
+    
+    df_output[i,"Var1"] <- var1
+    df_output[i,"Var2"] <- var2
+    df_output[i,"Shapiro"] <- shapiroTest$p.value
+    df_output[i,"df"] <- ttest$parameter
+    df_output[i,"t-value"] <- ttest$statistic
+    df_output[i,"p-value"] <- ttest$p.value
+    df_output[i,"cohens_d"] <- cohensd$effsize
+    df_output[i,"wilcoxon"] <- wilk$p.value
+    
+  }
+  
+  
+  
+  return(df_output)
+  
+}
+
+pairs <- list(  c("PDS1","PDS2"),
+                c("PDS1Intrusionen","PDS2Intrusionen"),
+                c("PDS1Hyperarousal","PDS2Hyperarousal"),
+                c("PDS1Vermeidung","PDS2Vermeidung"),
+                c("PTBS1","PTBS2"),
+                c("ITQ1Vermeidung","ITQ2Vermeidung"),
+                c("ITQ1Wiedererleben","ITQ2Wiedererleben"),
+                c("ITQ1GefuehlBedrohung","ITQ2GefuehlBedrohung"),
+                c("ITQ1AffektiveDysregulation","ITQ2AffektiveDysregulation"),
+                c("ITQ1NegativesSelbstbild","ITQ2NegativesSelbstbild"),
+                c("ITQ1ProblematischeBeziehungen","ITQ2ProblematischeBeziehungen"), 
+                c("DSO1","DSO2")
+)
+
+
+f1_table <- runTest(pairs, data)
+f1_table
+
+f1_table_nona <- runTest(pairs, NonresponderData)
+f1_table_nona
+
+
+install.packages("coin")
+library(coin)
+
+
+
+##Korrelation Variaben PDS und ITQ
+plot(data$DifferenzPDS, data$DifferenzPTBS)
+cor.test(x=data$DifferenzPDS, y=data$DifferenzPTBS, 
+         method="pearson", conf.level=.95)
+
+cor.test(x=data$DifferenzPDSIntrusionen, y=data$DifferenzITQWiedererleben, 
+         method="pearson", conf.level=.95)
+
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzITQVermeidung,
+         method="pearson", conf.level=.95)
+
+cor.test(x=data$DifferenzPDSHyperarousal, y=data$DifferenzITQGefuehlBedrohung, 
+         method="pearson", conf.level=.95)
+
+##### Fragestellung 2 und Fragestellung 4##### ------------------------------------------------------
+#Recode for log reg
+
+NonresponderData$Konsumrückfall <- ifelse(NonresponderData$Konsumrückfall == "2", 1, 0)
+
+#0=nein
+#1=ja
+
+
+#
+#Psych Belastung: GSI1, GSI2
+
+#PDS
+
+i_vars_f2 <- c("DifferenzPDS",
+            "DifferenzPDSHyperarousal",
+            "DifferenzPDSIntrusionen",
+            "DifferenzPDSVermeidung" )
+
+i_vars_f4 <- c("DifferenzGSI")
+
+
+data$Konsumrückfall
+NonresponderData$Konsumrückfall
+
+runLogReg <- function(i_vars, data){
+  
+  df_output <- data.frame()
+  
+  nrows <- length(i_vars)
+  
+  for (i in 1:nrows){
+    
+    iv  <- i_vars[[i]]
+    
+    #String für Formel zusammenstellen
+    formula_str <- paste0("Konsumrückfall", " ~",  iv)
+    print(formula_str)
+    
+    #In Formel umwandeln
+    model_formula <- as.formula(formula_str)
+
+    # Estimate the model
+    model <- glm(model_formula, data = data)
+    
+    df_output[i,"Var"] <- iv
+    df_output[i,"Intercept"] <- model$coefficients[[1]]
+    df_output[i,"Intercept (SE)"] <- summary(model)$coefficients[1,2]
+    df_output[i,"Intercept (p-Value)"] <- summary(model)$coefficients[1,4]
+    df_output[i,"Coefficient"] <- model$coefficients[[2]]
+    df_output[i,"Coefficient (OR)"] <- exp(model$coefficients[[2]])
+    df_output[i,"Coefficient (SE)"] <- summary(model)$coefficients[2,2]
+    df_output[i,"Coefficient (p-Value)"] <- summary(model)$coefficients[2,4]
+    
+  }
+  return(df_output)
+}
+
+f2_table <- runLogReg(i_vars_f2,NonresponderData)
+
+f4_table <- runLogReg(i_vars_f4,NonresponderData)
+
+
+#ITQ
+i_vars_f2 <- c("DifferenzPTBS",
+               "DifferenzITQVermeidung",
+               "DifferenzITQWiedererleben",
+               "DifferenzITQGefuehlBedrohung" )
+
+i_vars_f4 <- c("DifferenzGSI")
+
+
+
+runLogReg <- function(i_vars, data){
+  
+  df_output <- data.frame()
+  
+  nrows <- length(i_vars)
+  
+  for (i in 1:nrows){
+    
+    iv  <- i_vars[[i]]
+    
+    #String für Formel zusammenstellen
+    formula_str <- paste0("Konsumrückfall", " ~",  iv)
+    print(formula_str)
+    
+    #In Formel umwandeln
+    model_formula <- as.formula(formula_str)
+    
+    # Estimate the model
+    model <- glm(model_formula, data = data)
+    
+    df_output[i,"Var"] <- iv
+    df_output[i,"Intercept"] <- model$coefficients[[1]]
+    df_output[i,"Intercept (SE)"] <- summary(model)$coefficients[1,2]
+    df_output[i,"Intercept (p-Value)"] <- summary(model)$coefficients[1,4]
+    df_output[i,"Coefficient"] <- model$coefficients[[2]]
+    df_output[i,"Coefficient (OR)"] <- exp(model$coefficients[[2]])
+    df_output[i,"Coefficient (SE)"] <- summary(model)$coefficients[2,2]
+    df_output[i,"Coefficient (p-Value)"] <- summary(model)$coefficients[2,4]
+    
+  }
+  return(df_output)
+}
+
+f2_table <- runLogReg(i_vars_f2,NonresponderData)
+
+f4_table <- runLogReg(i_vars_f4,NonresponderData)
+
+#DSO
+
+i_vars_f2 <- c("DifferenzDSO",
+               "DifferenzITQAffektiveDysregulation",
+               "DifferenzITQNegativesSelbstbild",
+               "DifferenzITQProblematischeBeziehungen" )
+
+i_vars_f4 <- c("DifferenzGSI")
+
+
+
+runLogReg <- function(i_vars, data){
+  
+  df_output <- data.frame()
+  
+  nrows <- length(i_vars)
+  
+  for (i in 1:nrows){
+    
+    iv  <- i_vars[[i]]
+    
+    #String für Formel zusammenstellen
+    formula_str <- paste0("Konsumrückfall", " ~",  iv)
+    print(formula_str)
+    
+    #In Formel umwandeln
+    model_formula <- as.formula(formula_str)
+    
+    # Estimate the model
+    model <- glm(model_formula, data = data)
+    
+    df_output[i,"Var"] <- iv
+    df_output[i,"Intercept"] <- model$coefficients[[1]]
+    df_output[i,"Intercept (SE)"] <- summary(model)$coefficients[1,2]
+    df_output[i,"Intercept (p-Value)"] <- summary(model)$coefficients[1,4]
+    df_output[i,"Coefficient"] <- model$coefficients[[2]]
+    df_output[i,"Coefficient (OR)"] <- exp(model$coefficients[[2]])
+    df_output[i,"Coefficient (SE)"] <- summary(model)$coefficients[2,2]
+    df_output[i,"Coefficient (p-Value)"] <- summary(model)$coefficients[2,4]
+    
+  }
+  return(df_output)
+}
+
+f2_table <- runLogReg(i_vars_f2,NonresponderData)
+
+f4_table <- runLogReg(i_vars_f4,NonresponderData)
+
+
+
+
+##### Fragestellung 3 ##### ------------------------------------------------------
+
+vars_for_corr <- c("DifferenzPDS",
+                   "DifferenzPDSHyperarousal",
+                   "DifferenzPDSIntrusionen",
+                   "DifferenzPDSVermeidung", 
+                   "DifferenzGSI")
+
+
+df_correltable <- data[,vars_for_corr]
+
+cor_table<- round(rcorr(as.matrix(df_correltable))$r,2)
+
+#Die p-Werte speichern
+p_table <- round(rcorr(as.matrix(df_correltable))$P,4)
+
+#Loop über Reihen und Kolonnen im Datensatz
+for (i in 1:nrow(cor_table)){
+  for (j in 1:ncol(cor_table)){
+    #Falls der Wert NA ist, dann zum nächsten Wert springen
+    if (is.na(p_table[i,j])){
+      next
+    }
+    #Falls der p-Value im p-Value Datenset kleiner als 0.001, dann im Korrelationskoeffizientendatenset *** hinzufügen
+    if(p_table[i,j]<=0.001){
+      cor_table[i,j] <- paste(cor_table[i,j], "***")
+    }
+    #Falls der p-Value im p-Value Datenset kleiner als 0.01, dann im Korrelationskoeffizientendatenset ** hinzufügen
+    else if(p_table[i,j]<=0.01){
+      cor_table[i,j] <- paste(cor_table[i,j], "**")
+    }
+    #Falls der p-Value im p-Value Datenset kleiner als 0.05, dann im Korrelationskoeffizientendatenset * hinzufügen
+    else if(p_table[i,j]<=0.05){
+      cor_table[i,j] <- paste(cor_table[i,j], "*")
+    }
+  }
+}
+
+#Nur untere Hälfte behalten des Tables
+cor_table[upper.tri(cor_table)]<-""
+upper<-as.data.frame(cor_table)
+p_table[upper.tri(p_table)] <-""
+p_upper <-as.data.frame(p_table)
+
+write.xlsx(upper,file="Korrelationen.xlsx")
+write.xlsx(p_upper,file="Korrelationen_pvalues.xlsx")
+
+##ITQ
+vars_for_corr <- c("DifferenzPTBS",
+                   "DifferenzITQVermeidung",
+                   "DifferenzITQWiedererleben",
+                   "DifferenzITQGefuehlBedrohung", 
+                   "DifferenzGSI")
+
+
+df_correltable <- data[,vars_for_corr]
+
+cor_table<- round(rcorr(as.matrix(df_correltable))$r,2)
+
+#Die p-Werte speichern
+p_table <- round(rcorr(as.matrix(df_correltable))$P,4)
+
