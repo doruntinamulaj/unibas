@@ -1,0 +1,90 @@
+
+
+#Katamnesestichprobe bearbeiten: Für die Hypothese 2 und 4 schliesse ich nur die Patienten*Innen ein, von welchen ich Daten habe zur Katamnese.
+#Fehlende Daten (NA) wurden ausgeschlossen, dafür habe ich aus meinem gesamten Datensatz diese Patienten*Innen ausgeschlossen.
+
+#Zuerst meinen Datensatz bearbeiten. 
+data=read_excel("D:/Masterarbeit def/Daten/R-Daten.xlsx") 
+
+data <- mutate(data, DifferenzPDS = data$PDS2-data$PDS1)
+data <- mutate(data, DifferenzPTBS = data$PTBS2-data$PTBS1)
+data <- mutate(data, DifferenzDSO = data$DSO2-data$DSO1)
+data <- mutate(data, DifferenzGSI = data$GSI2-data$GSI1)
+
+#PDS-Unterskalen
+data <- mutate(data, DifferenzPDSIntrusionen = data$PDS2Intrusionen-data$PDS1Intrusionen)
+data <- mutate(data, DifferenzPDSVermeidung = data$PDS2Vermeidung-data$PDS1Vermeidung)
+data <- mutate(data, DifferenzPDSHyperarousal = data$PDS2Hyperarousal-data$PDS1Hyperarousal)
+
+#ITQ-Unterskalen
+data <- mutate(data, DifferenzITQWiedererleben = data$ITQ2Wiedererleben-data$ITQ1Wiedererleben)
+data <- mutate(data, DifferenzITQVermeidung = data$ITQ2Vermeidung-data$ITQ1Vermeidung)
+data <- mutate(data, DifferenzITQGefuehlBedrohung = data$ITQ2GefuehlBedrohung-data$ITQ1GefuehlBedrohung)
+data <- mutate(data, DifferenzITQAffektiveDysregulation = data$ITQ2AffektiveDysregulation-data$ITQ1AffektiveDysregulation)
+data <- mutate(data, DifferenzITQNegativesSelbstbild = data$ITQ2NegativesSelbstbild-data$ITQ1NegativesSelbstbild)
+data <- mutate(data, DifferenzITQProblematischeBeziehungen = data$ITQ2ProblematischeBeziehungen-data$ITQ1ProblematischeBeziehungen)
+
+#BSCL-Unterskalen
+data <- mutate(data, DifferenzBSCLSomatisierung = data$BSCL2Somatisierung-data$BSCL1Somatisierung)
+data <- mutate(data, DifferenzBSCLZwanghaftigkeit = data$BSCL2Zwanghaftigkeit-data$BSCL1Zwanghaftigkeit)
+data <- mutate(data, DifferenzBSCLUnsicherheitSozialkontakt = data$BSCL2UnsicherheitSozialkontakt-data$BSCL1UnsicherheitSozialkontakt)
+data <- mutate(data, DifferenzBSCLDepressivitaet = data$BSCL2Depressivitaet-data$BSCL1Depressivitaet)
+data <- mutate(data, DifferenzBSCLAengstlichkeit = data$BSCL2Aengstlichkeit-data$BSCL1Aengstlichkeit)
+data <- mutate(data, DifferenzBSCLAgressivitätt = data$BSCL2Aggressivitaet-data$BSCL1Aggressivitaet)
+data <- mutate(data, DifferenzBSCLPhobischeAngst = data$BSCL2PhobischeAngst-data$BSCL1PhobischeAngst)
+data <- mutate(data, DifferenzBSCLParanoidesDenken = data$BSCL2ParanoidesDenken-data$BSCL1ParanoidesDenken)
+data <- mutate(data, DifferenzBSCLPsychotizismus = data$BSCL2Psychotizismus-data$BSCL1Psychotizismus)
+
+
+#Datensatz nur Katamnesestichprobe: Blöden Namen gewählt mit Nonresponder, nicht irren lassen. Einfach als Namen sehen.
+NonresponderData <- data[-c(1,2,4,8,10,11,12,13,14,17,22,28,30,31,36,37,38,39,40), ]
+view(NonresponderData)
+
+
+#Hypothese 2 mit Kendalls Tau-b
+
+library(DescTools)
+
+#Konsumvorfall: 1 = JA, 2 = NEIN
+plot(NonresponderData$DifferenzPDS, NonresponderData$Konsumrückfall)
+
+#PDS
+KendallTauB(x=NonresponderData$DifferenzPDS, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzPDSIntrusionen, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzPDSVermeidung, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzPDSHyperarousal, y=NonresponderData$Konsumrückfall, conf.level = .95)
+
+#Tabelle auf Excel machen um dann nach Word zu kopieren
+andereVariablen <- c("DifferenzPDS", "DifferenzPDSIntrusionen", "DifferenzPDSVermeidung", "DifferenzPDSHyperarousal")
+
+zuFuellendeListe <- list()
+for(i in 1:length(andereVariablen)) {
+  zuFuellendeListe[[i]] <-
+    DescTools::KendallTauB(x=NonresponderData[[andereVariablen[i]]],
+                           y=NonresponderData[["Konsumrückfall"]],
+                           conf.level = .95)
+}
+# Zu Ergebnisdatensatz verschmelzen:
+(ergebnisTabelle <- dplyr::bind_rows(zuFuellendeListe))
+
+#in excel auf einfügen drücken
+write.table(data.frame(ergebnisTabelle), file="clipboard", sep = '\t', row.names = FALSE, col.names=TRUE, na = "")
+
+
+
+
+#ITQ
+KendallTauB(x=NonresponderData$DifferenzPTBS, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzITQGefuehlBedrohung, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzITQWiedererleben, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzITQVermeidung, y=NonresponderData$Konsumrückfall, conf.level = .95)
+
+KendallTauB(x=NonresponderData$DifferenzDSO, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzITQAffektiveDysregulation, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzITQProblematischeBeziehungen, y=NonresponderData$Konsumrückfall, conf.level = .95)
+KendallTauB(x=NonresponderData$DifferenzITQNegativesSelbstbild, y=NonresponderData$Konsumrückfall, conf.level = .95)
+
+
+
+#Hypothese 4
+KendallTauB(x=NonresponderData$DifferenzGSI, y=NonresponderData$Konsumrückfall, conf.level = .95)
