@@ -1,0 +1,239 @@
+
+
+library(readxl)
+R_Katamnese <- read_excel("D:/Masterarbeit def/Daten/R Katamnese.xlsx")
+View(R_Katamnese)
+
+# -----------------------------------------------
+#MM Start
+# Achtung: Lese Datensatz und wandle unmittelbar um zu data.frame:
+R_Katamnese <- data.frame(readxl::read_excel("/Users/mmiche/Desktop/TeachingClass/HS2021Masterprojekt/MasterstudierendeHS21/DoruntinaMulaj/Today20231002/R Katamnese.xlsx"))
+
+#NAs replacen mit "richtigen" NAs
+R_Katamnese[R_Katamnese=="NA"] <- NA
+
+# Check class of columns in the dataset
+str(R_Katamnese)
+# Change all columns that are of class character to be of class numeric
+for(i in 1:ncol(R_Katamnese)) {
+    if(class(R_Katamnese[,i])=="character") {
+        R_Katamnese[,i] <- as.numeric(R_Katamnese[,i])
+    }
+}
+# check
+str(R_Katamnese)
+
+# Nun bräuchte es die as.numeric() Befehle weiter unten nicht mehr. Jedoch, sie können auch nichts kaputt machen, sie sind bloss überflüssig.
+#MM Ende
+# -----------------------------------------------
+
+install.packages("rcompanion")
+library(rcompanion)
+
+summary(as.numeric(R_Katamnese$Beziehung), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Beziehung), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Verwandte), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Verwandte), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Kinder), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Kinder), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Bekannte), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Bekannte), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Freizeit), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Freizeit), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Arbeit), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Arbeit), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Gesundheit), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Gesundheit), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Seele), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Seele), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Finanzen), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Finanzen), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Wohnen), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Wohnen), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Delikte), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Delikte), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Suchtmittel), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Suchtmittel), na.rm = TRUE)
+
+summary(as.numeric(R_Katamnese$Alltag), na.rm = TRUE)
+sd(as.numeric(R_Katamnese$Alltag), na.rm = TRUE)
+
+library(lsr)
+
+#One Sample T-Test
+t.test(as.numeric(R_Katamnese$Beziehung),mu = 0)
+cohensD(as.numeric(R_Katamnese$Beziehung),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Verwandte),mu = 0)
+cohensD(as.numeric(R_Katamnese$Verwandte),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Kinder),mu = 0)
+cohensD(as.numeric(R_Katamnese$Kinder),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Bekannte),mu = 0)
+cohensD(as.numeric(R_Katamnese$Bekannte),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Freizeit),mu = 0)
+cohensD(as.numeric(R_Katamnese$Freizeit),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Arbeit),mu = 0)
+cohensD(as.numeric(R_Katamnese$Arbeit),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Gesundheit),mu = 0)
+cohensD(as.numeric(R_Katamnese$Gesundheit),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Seele),mu = 0)
+cohensD(as.numeric(R_Katamnese$Seele),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Finanzen),mu = 0)
+cohensD(as.numeric(R_Katamnese$Finanzen),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Wohnen),mu = 0)
+cohensD(as.numeric(R_Katamnese$Wohnen),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Delikte),mu = 0)
+cohensD(as.numeric(R_Katamnese$Delikte),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Suchtmittel),mu = 0)
+cohensD(as.numeric(R_Katamnese$Suchtmittel),mu = 0)
+
+t.test(as.numeric(R_Katamnese$Alltag),mu = 0)
+cohensD(as.numeric(R_Katamnese$Alltag),mu = 0)
+
+
+
+boxplot(as.numeric(R_Katamnese$Beziehung), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Beziehung", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Verwandte), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Verwandte", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Kinder), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Kinder", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Bekannte), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Bekannte", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Freizeit), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Freizeit", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Arbeit), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Arbeit", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Gesundheit), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Gesundheit", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Seele), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Seele", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Finanzen), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Finanzen", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Wohnen), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Wohnen", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Delikte), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Delikte", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Suchtmittel), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Suchtmittel", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+boxplot(as.numeric(R_Katamnese$Alltag), xlab = "während sechs Monaten nach Klinikaustritt", ylab="Zufriedenheit", 
+        main="Alltag", cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+
+
+
+
+
+#Ausreisser in den Variablen Bekannte, Seele, Finanzen und Delikte
+
+#MM Start
+# Schöne Website rund um Wilcoxon Test (zur Orientierung und Inspiration, wie eine möglichst simple und gleichzeitig informative Ergebnisdarstellung aussehen könnte)
+# https://statsandr.com/blog/one-sample-wilcoxon-test-in-r/
+
+# Beachte unbedingt auch den Hinweis auf dieser Website (ziemlich weit unten; kleine Überschrift 'Interpretation' direkt oberhalb der grossen Überschrift 'Combine statistical test and plot') zum Inhalt und Umgang mit warning messages.
+#MM Ende
+
+wilcox.test(as.numeric(R_Katamnese$Bekannte),
+            mu=0,
+            conf.int=TRUE,
+            na.rm=TRUE,
+            conf.level=0.95,
+            alternative = "greater")
+
+wilcox.test(as.numeric(R_Katamnese$Seele),
+            mu=0,
+            conf.int=TRUE,
+            conf.level=0.95,
+            alternative = "greater")
+
+wilcox.test(as.numeric(R_Katamnese$Finanzen),
+            mu=0,
+            conf.int=TRUE,
+            conf.level=0.95,
+            alternative = "greater")
+
+wilcox.test(as.numeric(R_Katamnese$Delikte),
+            mu=0,
+            conf.int=TRUE,
+            conf.level=0.95,
+            alternative = "greater")
+
+
+
+#Effektstäkre
+# install.packages("rcompanion")
+library(rcompanion)
+library(tidyverse)
+library(coin)
+library(survival)
+# install.packages("survival")
+# install.packages("coin")
+install.packages("rstatix")
+library(rstatix)
+
+#MM Start
+# Wilcoxon effect size
+# --------------------
+# https://rpkgs.datanovia.com/rstatix/reference/wilcox_effsize.html
+
+rstatix::wilcox_effsize(data = R_Katamnese,
+                        Bekannte ~ 1, mu = 0)
+#MM Ende
+
+#Ergebniss immer NA?
+#MM Start
+# Ich kann es leider nicht selbst testen, weil ich hierzu R auf Version 4.1.0 updaten müsste. Jedoch fielen mir 2 Dinge auf:
+# 1. Du rechnest oben bereits den Wilcoxon Einstichproben Test (wilcox.test), warum hier nochmal?
+# 2. Das R-Skript, das ich von dir erhielt, hatte als Spaltenname Bekannte.f stehen, aber diese Spalte gibt es nicht. Möglicher Grund für Ergebnis immer NA.
+#MM Ende
+wilcoxonOneSampleR(x=as.numeric(R_Katamnese$Bekannte), mu=0, na.rm=TRUE,ci=TRUE)
+wilcoxonOneSampleR(x=as.numeric(R_Katamnese$Seele), mu=0, na.rm=TRUE)
+wilcoxonOneSampleR(x=as.numeric(R_Katamnese$Finanzen), mu=0, na.rm=TRUE)
+wilcoxonOneSampleR(x=as.numeric(R_Katamnese$Delikte), mu=0, na.rm=TRUE)
+
+
+wilcox_effsize(as.numeric(R_Katamnese$Bekannte), mu=0)
+
+#https://rcompanion.org/handbook/F_02.html
+if(!require(psych)){install.packages("psych")}
+if(!require(FSA)){install.packages("FSA")}
+if(!require(rcompanion)){install.packages("rcompanion")}
+if(!require(coin)){install.packages("coin")}
+if(!require(exactRankTests)){install.packages("exactRankTests")}
+
+
+
+
