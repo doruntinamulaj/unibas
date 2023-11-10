@@ -1,0 +1,903 @@
+##DATENBEARBEITUNG MASTERARBEIT
+
+# DATEN MIT AUSSCHLÜSSE N= 40
+install.packages("survival")
+install.packages("table1")
+install.packages("Hmisc")
+install.packages("coin")
+#load packages 
+library(readxl)
+library(tidyverse)
+library(tidyr)
+library(psych)
+library(dplyr)
+library(Matrix)
+library(lme4)
+library(ggplot2)
+library(foreign)
+library(pwr)
+library(lsr)
+library(factoextra)
+library(writexl)
+library(survival)
+library(xlsx)
+library(table1)
+library(boot)
+library(Hmisc)
+library(coin)
+
+view(data)
+#Daten ohne Katamnesewerte
+data=read_excel("D:/Masterarbeit def/Daten/R-Daten.xlsx") 
+view(data)
+
+#ohne Non-Responder
+NonresponderData <- data[-c(1,2,4,8,10,11,12,13,14,17,22,28,30,31,36,37,38,39,40), ]
+view(NonresponderData)
+
+
+#Katamnesedaten 0 = JA, 1 = NEIN, 2 = NA
+katamnese=read_excel("D:/Masterarbeit def/Daten/R Katamnese.xlsx")
+view(katamnese)
+#NA = NA, 1= JA, 2 = NEIN
+
+mean(katamnese$Aufenthaltsdauer)
+sd(katamnese$Aufenthaltsdauer)
+table(katamnese$`Rückfall 3`)
+table(katamnese$`Rückfall 6`)
+table(katamnese$Konsumrückfall)
+
+
+#Daten beschreiben
+set.seed(123)
+data$Geschlecht <- as.factor(ifelse(data$Geschlecht ==1, "w", "m"))
+view(data)
+
+#Stichprobengrösse abschätzen
+power.t.test(delta=0.8, sig.level=.05, power = .80, type="one.sample", alternative="one.sided")
+
+power.t.test(delta=1.05, sig.level=.05, power=.80, type="one.sample",alternative="one.sided")
+             
+
+#neue Spalten einfügen mit den Differenzen PDS1 zu PDS2/ITQ1a zu ITQ2a/ ITQ1b zu ITQ2b
+data <- mutate(data, DifferenzPDS = data$PDS2-data$PDS1)
+data <- mutate(data, DifferenzPTBS = data$PTBS2-data$PTBS1)
+data <- mutate(data, DifferenzDSO = data$DSO2-data$DSO1)
+view(data)
+
+#Spalte mit Differenz BSCL einfügen
+data <- mutate(data, DifferenzGSI = data$GSI2-data$GSI1)
+view(data)
+
+#Spalte mit Differenzen aller Unterskalen
+
+#PDS-Unterskalen
+data <- mutate(data, DifferenzPDSIntrusionen = data$PDS2Intrusionen-data$PDS1Intrusionen)
+data <- mutate(data, DifferenzPDSVermeidung = data$PDS2Vermeidung-data$PDS1Vermeidung)
+data <- mutate(data, DifferenzPDSHyperarousal = data$PDS2Hyperarousal-data$PDS1Hyperarousal)
+
+#ITQ-Unterskalen
+data <- mutate(data, DifferenzITQWiedererleben = data$ITQ2Wiedererleben-data$ITQ1Wiedererleben)
+data <- mutate(data, DifferenzITQVermeidung = data$ITQ2Vermeidung-data$ITQ1Vermeidung)
+data <- mutate(data, DifferenzITQGefuehlBedrohung = data$ITQ2GefuehlBedrohung-data$ITQ1GefuehlBedrohung)
+data <- mutate(data, DifferenzITQAffektiveDysregulation = data$ITQ2AffektiveDysregulation-data$ITQ1AffektiveDysregulation)
+data <- mutate(data, DifferenzITQNegativesSelbstbild = data$ITQ2NegativesSelbstbild-data$ITQ1NegativesSelbstbild)
+data <- mutate(data, DifferenzITQProblematischeBeziehungen = data$ITQ2ProblematischeBeziehungen-data$ITQ1ProblematischeBeziehungen)
+
+#BSCL-Unterskalen
+data <- mutate(data, DifferenzBSCLSomatisierung = data$BSCL2Somatisierung-data$BSCL1Somatisierung)
+data <- mutate(data, DifferenzBSCLZwanghaftigkeit = data$BSCL2Zwanghaftigkeit-data$BSCL1Zwanghaftigkeit)
+data <- mutate(data, DifferenzBSCLUnsicherheitSozialkontakt = data$BSCL2UnsicherheitSozialkontakt-data$BSCL1UnsicherheitSozialkontakt)
+data <- mutate(data, DifferenzBSCLDepressivitaet = data$BSCL2Depressivitaet-data$BSCL1Depressivitaet)
+data <- mutate(data, DifferenzBSCLAengstlichkeit = data$BSCL2Aengstlichkeit-data$BSCL1Aengstlichkeit)
+data <- mutate(data, DifferenzBSCLAgressivitätt = data$BSCL2Aggressivitaet-data$BSCL1Aggressivitaet)
+data <- mutate(data, DifferenzBSCLPhobischeAngst = data$BSCL2PhobischeAngst-data$BSCL1PhobischeAngst)
+data <- mutate(data, DifferenzBSCLParanoidesDenken = data$BSCL2ParanoidesDenken-data$BSCL1ParanoidesDenken)
+data <- mutate(data, DifferenzBSCLPsychotizismus = data$BSCL2Psychotizismus-data$BSCL1Psychotizismus)
+
+view(data)
+
+#Mittelwerte Differenzen:
+mean(data$DifferenzPDS) # -6.975
+mean(data$DifferenzPTBS) # -1.775
+mean(data$DifferenzDSO) # -2
+mean(data$DifferenzGSI) # -24.025
+
+#Mittelwerte Differenzen Subskalen:
+#PDS
+mean(data$DifferenzPDSIntrusionen) # -1.575
+mean(data$DifferenzPDSVermeidung) # - 3.65
+mean(data$DifferenzPDSHyperarousal) # -1.75
+#ITQ
+mean(data$DifferenzITQWiedererleben) # -0.875
+mean(data$DifferenzITQVermeidung) # -0.275
+mean(data$DifferenzITQGefuehlBedrohung) # -0,625
+mean(data$DifferenzITQAffektiveDysregulation) # -0.575
+mean(data$DifferenzITQNegativesSelbstbild) # -0.95
+mean(data$DifferenzITQProblematischeBeziehungen) # -0,7
+#BSCL
+mean(data$DifferenzBSCLSomatisierung) # -1.85
+mean(data$DifferenzBSCLZwanghaftigkeit) # -3
+mean(data$DifferenzBSCLUnsicherheitSozialkontakt) # -2.375
+mean(data$DifferenzBSCLAengstlichkeit) # -1.95
+mean(data$DifferenzBSCLDepressivitaet) # -4.125
+mean(data$DifferenzBSCLPhobischeAngst) # -2.775
+mean(data$DifferenzBSCLParanoidesDenken) # -2.15
+mean(data$DifferenzBSCLPsychotizismus) # -3.025
+
+
+
+#Deskreptive Statistik
+summary(data)
+
+mean(data$Alter) #35.6
+sd(data$Alter) #9.99
+mean(data$Aufenthalt) #92.9
+sd(data$Aufenthalt) #28.28
+
+table(data$Geschlecht) #0=männlich
+mean(data$Alter)
+mean(data$Aufenthalt)
+table(data$Aufenthaltsart)
+table(data$Zivilstand)
+table(data$Traumaerfahrung)
+table(data$Diagnose)
+table(data$Hauptsubstanz)
+
+#Häufigkeiten
+Kreuztabelle <- with(data, table(Traumaerfahrung, Geschlecht))
+Kreuztabelle
+
+margin.table(Kreuztabelle, 1) # Randhäufigkeiten  
+margin.table(Kreuztabelle, 2) # Randhäufigkeiten  
+
+
+prop.table(Kreuztabelle, 1) # Zeilenweise rel. Häufigkeiten
+prop.table(Kreuztabelle, 2) # Spaltenweise rel. Häufigkeiten
+
+
+#Hat es Ausreisser? Intervallskalierte Daten sind abhängig von Ausreissern.
+range(data$PDS1, na.rm=T)
+range(data$PDS2, na.rm=T)
+range(data$PTBS1, na.rm=T)
+range(data$PTBS2, na.rm=T)
+range(data$DSO1, na.rm=T)
+range(data$DSO2, na.rm=T)
+range(data$GSI1, na.rm=T)
+range(data$GSI2, na.rm=T)
+
+#Kreuztabelle Geschlecht und Traumaerfahrung
+with(data, table(Traumaerfahrung, Geschlecht))
+
+
+#Graphik mit Aufenthaltsdauer und Differenzen Traumasymptomatik, psychische Belastung
+data <- mutate(data, AufenthaltsGruppe = case_when(data$Aufenthalt < 92.9 ~ 'unter',
+                                                 data$Aufenthalt > 92.8 ~ 'ober'))
+table(data$AufenthaltsGruppe)
+
+#data nur mit Patienten die unter Durchschnitt Aufenthalt (92.9)
+DataUnter <- data[-c(1,3,4,5,6,7,9,11,13,14,15,16,21,22,25,26,27,28,30,31,32,33,34,35,39,40), ]
+DataOber <- data[-c(2,8,10,12,17,18,19,20,23,24,29,36,37,38), ]
+view(DataUnter)
+
+#t-Test für unabhängige Stichproben?
+t.test(DataUnter$PDS1~DataUnter$PDS2, var.equal = TRUE, alternative = "greater")
+
+
+plot(DataUnter$PDS2, DataUnter$PDS1, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="SSS für Aufenthaltsdauer unter Durchschnitt (n=26)", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+plot(DataOber$PDS2, DataOber$PDS1, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="SSS für Aufenthaltsdauer über Durchschnitt (n=14)", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+
+
+#Boxplots für Ausreisseranalyse nur Variablen einzeln, nicht Differenzen: 
+boxplot(data$PDS1,data$PDS2, xlab = "Eintritt und Austritt", ylab="PDS", main="Symptom Severity Score")
+boxplot(data$PDS1Intrusionen,data$PDS2Intrusionen, xlab = "Eintritt und Austritt", ylab="PDS", main="Intrusionen")
+boxplot(data$PDS1Vermeidung,data$PDS2Vermeidung, xlab = "Eintritt und Austritt", ylab="PDS", main="Vermeidung")
+boxplot(data$PDS1Hyperarousal,data$PDS2Hyperarousal, xlab = "Eintritt und Austritt", ylab="PDS", main="Hyperarousal")
+
+boxplot(data$PTBS1, data$PTBS2, xlab = "Eintritt und Austritt", ylab="ITQ", main="PTBS-Wert")
+boxplot(data$ITQ1Wiedererleben,data$ITQ2Wiedererleben, xlab = "Eintritt und Austritt", ylab="ITQ", main="Wiedererleben")
+boxplot(data$ITQ1Vermeidung,data$ITQ2Vermeidung, xlab = "Eintritt und Austritt", ylab="ITQ", main="Vermeidung")
+boxplot(data$ITQ1GefuehlBedrohung,data$ITQ2GefuehlBedrohung, xlab = "Eintritt und Austritt", ylab="ITQ", main="Gefühl von Bedrohung")
+
+boxplot(data$DSO1, data$DSO2, xlab = "Eintritt und Austritt", ylab="ITQ", main="DSO-Wert")
+boxplot(data$ITQ1AffektiveDysregulation,data$ITQ2AffektiveDysregulation, xlab = "Eintritt und Austritt", ylab="ITQ", main="Affektive Dysregulation")
+boxplot(data$ITQ1NegativesSelbstbild,data$ITQ2NegativesSelbstbild, xlab = "Eintritt und Austritt", ylab="ITQ", main="Negatives Selbstbild")
+boxplot(data$ITQ1ProblematischeBeziehungen,data$ITQ2ProblematischeBeziehungen, xlab = "Eintritt und Austritt", ylab="ITQ", main="Problematische Beziehungen")
+
+boxplot(data$GSI1, data$GSI2, xlab = "Eintritt und Austritt", ylab="BSCL", main="Global Severity Index")
+boxplot(data$BSCL1Somatisierung,data$BSCL2Somatisierung, xlab = "Eintritt und Austritt", ylab="BSCL", main="Somatisierung")
+boxplot(data$BSCL1Zwanghaftigkeit,data$BSCL2Zwanghaftigkeit, xlab = "Eintritt und Austritt", ylab="BSCL", main="ZWanghaftigkeit")
+boxplot(data$BSCL1UnsicherheitSozialkontakt,data$BSCL2UnsicherheitSozialkontakt, xlab = "Eintritt und Austritt", ylab="BSCL", main="Unsicherheit im Sozialkontakt")
+boxplot(data$BSCL1Aengstlichkeit,data$BSCL2Aengstlichkeit, xlab = "Eintritt und Austritt", ylab="BSCL", main="Ängstlichkeit")
+boxplot(data$BSCL1Aggressivitaet,data$BSCL2Aggressivitaet, xlab = "Eintritt und Austritt", ylab="BSCL", main="Aggressivität")
+boxplot(data$BSCL1Depressivitaet,data$BSCL2Depressivitaet, xlab = "Eintritt und Austritt", ylab="BSCL", main="Depressivität")
+boxplot(data$BSCL1PhobischeAngst,data$BSCL2PhobischeAngst, xlab = "Eintritt und Austritt", ylab="BSCL", main="Phobische Angst")
+boxplot(data$BSCL1ParanoidesDenken,data$BSCL2ParanoidesDenken, xlab = "Eintritt und Austritt", ylab="BSCL", main="Paranoides Denken")
+boxplot(data$BSCL1Psychotizismus,data$BSCL2Psychotizismus, xlab = "Eintritt und Austritt", ylab="BSCL", main="Psychotizismus")
+
+
+
+#Schweregrad Gruppierungen PDS
+#neue Spalte erstellen mit den Schweregraden PDS1
+data <- mutate(data, PDS1Schweregrad = case_when(data$PDS1 < 11 ~ 'leicht',
+                                                 data$PDS1 < 20 ~ 'mässig',
+                                                 data$PDS1 < 35 ~ 'mässig bis schwer',
+                                                 data$PDS1 > 35 ~ 'schwer'))
+
+
+NonresponderData <- mutate(NonresponderData, PDS1Schweregrad = case_when(NonresponderData$PDS1 < 11 ~ 'leicht',
+                                                 NonresponderData$PDS1 < 20 ~ 'mässig',
+                                                 NonresponderData$PDS1 < 35 ~ 'mässig bis schwer',
+                                                 NonresponderData$PDS1 > 35 ~ 'schwer'))
+
+
+table(data$PDS1Schweregrad)
+table(NonresponderData$PDS1Schweregrad)
+
+#neue Spalte erstellen mit den Schweregraden PDS2
+data <- mutate(data, PDS2Schweregrad = case_when(data$PDS2 < 11 ~ 'leicht',
+                                                 data$PDS2 < 20 ~ 'mässig',
+                                                 data$PDS2 < 35 ~ 'mässig bis schwer',
+                                                 data$PDS2 > 35 ~ 'schwer'))
+
+NonresponderData <- mutate(NonresponderData, PDS2Schweregrad = case_when(NonresponderData$PDS2 < 11 ~ 'leicht',
+                                                                         NonresponderData$PDS2 < 20 ~ 'mässig',
+                                                                         NonresponderData$PDS2 < 35 ~ 'mässig bis schwer',
+                                                                         NonresponderData$PDS2 > 35 ~ 'schwer'))
+
+table(data$PDS2Schweregrad)
+table(NonresponderData$PDS2Schweregrad)
+
+
+#Kreuztabellen für beide Dataframes
+with(data, table(PDS1Schweregrad, PDS2Schweregrad))
+with(NonresponderData, table(PDS1Schweregrad, PDS2Schweregrad))
+
+
+
+##GRAFIK für in den Anhang
+
+#Streudiagramme aller Variablen
+
+#PDS1 und PDS2
+plot(data$PDS2, data$PDS1, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der PDS-Werte", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+#Unterskalen
+plot(data$PDS2Intrusionen, data$PDS1Intrusionen, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Intrusionen", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+plot(data$PDS2Vermeidung, data$PDS1Vermeidung, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Vermeidung", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+plot(data$PDS2Hyperarousal, data$PDS1Hyperarousal, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Hyperarousal", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+#ITQ1 und ITQ2
+#PTBS-Wert
+plot(data$PTBS2, data$PTBS1, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der PTBS-Werte vom ITQ", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+#Unterskalen
+plot(data$ITQ2Wiedererleben, data$ITQ1Wiedererleben, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Wiedererleben", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+plot(data$ITQ2Vermeidung, data$ITQ1Vermeidung, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Vermeidung", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+plot(data$ITQ2GefuehlBedrohung, data$ITQ1GefuehlBedrohung, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Gefühl von Bedrohung", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+#DSO-Wert
+plot(data$DSO2, data$DSO1, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der DSO-Werte vom ITQ", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+#Unterskalen
+plot(data$ITQ2AffektiveDysregulation, data$ITQ1AffektiveDysregulation, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Affektive Dysregulation", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+plot(data$ITQ2NegativesSelbstbild, data$ITQ1NegativesSelbstbild, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Negatives Selbstbild", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+plot(data$ITQ2ProblematischeBeziehungen, data$ITQ1ProblematischeBeziehungen, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der Unterskala Problem. Beziehungen", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+#BSCL
+plot(data$GSI2, data$GSI1, xlab="Austrittsmessung", ylab="Eintrittsmessung", 
+     main="Streudiagramm der GSI-Werte vom BSCL", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+
+
+#Testung Normalverteilung
+#PDS
+shapiro.test(data$DifferenzPDS)
+hist(data$DifferenzPDS, xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm PDS-Werte")
+
+shapiro.test(data$DifferenzPDSIntrusionen)
+hist(data$DifferenzPDSIntrusionen,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Intrusionen")
+
+shapiro.test(data$DifferenzPDSVermeidung)
+hist(data$DifferenzPDSVermeidung,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Vermeidung")
+
+shapiro.test(data$DifferenzPDSHyperarousal)
+hist(data$DifferenzPDSHyperarousal,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Hyperarousal")
+
+#ITQ
+#PTBS
+shapiro.test(data$DifferenzPTBS)
+hist(data$DifferenzPTBS,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm PTBS-Werte")
+
+shapiro.test(data$DifferenzITQVermeidung)
+hist(data$DifferenzPDSIntrusionen,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Vermeidung")
+
+shapiro.test(data$DifferenzITQWiedererleben)
+hist(data$DifferenzPDSVermeidung,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Wiedererleben")
+
+shapiro.test(data$DifferenzITQGefuehlBedrohung)
+hist(data$DifferenzPDSHyperarousal,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Gefühl v. Bedrohung")
+
+#DSO
+shapiro.test(data$DifferenzDSO)
+hist(data$DifferenzDSO,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm DSO-Werte")
+
+shapiro.test(data$DifferenzITQAffektiveDysregulation)
+hist(data$DifferenzPDSIntrusionen,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Affektive Dysregulation")
+
+shapiro.test(data$DifferenzITQProblematischeBeziehungen)
+hist(data$DifferenzPDSVermeidung,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Probl. Beziehungen")
+
+shapiro.test(data$DifferenzITQNegativesSelbstbild)
+hist(data$DifferenzPDSHyperarousal,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm der Unterskala Negatives Selbstbild")
+
+#BSCL
+shapiro.test(data$DifferenzGSI)
+hist(data$DifferenzGSI,xlab="Differenz von Eintritt zu Austritt", ylab="Häufigkeit", main="Histogramm GSI-Werte")
+
+
+
+
+
+###Hypothese 1: Die Traumapatienten*Innen weisen eine signifikante Reduktion der 
+#Traumasymptomatik von Klinikeintritt bis zu Klinikaustritt. 
+
+power.t.test(delta=0.5, sig.level=.05, power=.80, type="one.sample",
+             alternative="one.sided")
+
+## PDS
+describe(data$PDS1)
+describe(data$PDS2) 
+describe(data$PDS1Intrusionen)
+describe(data$PDS2Intrusionen)
+describe(data$PDS1Vermeidung)
+describe(data$PDS2Vermeidung)
+describe(data$PDS1Hyperarousal)
+describe(data$PDS2Hyperarousal)
+
+#t-test für abhangige Stichproben
+t.test(data$PDS1, data$PDS2, alternative="greater", paired = TRUE) 
+
+
+
+#Effektstärke
+cohensD(data$PDS1, data$PDS2, method = "paired") #0.79
+
+#Korrelation zwischen den beiden Variablen PDS1 und PDS2
+cor(data$PDS1, data$PDS2, use = "pairwise.complete.obs") #keine fehlenden Werte, der Teil use beschreibt Umgang mit fehlenden Werten
+#cor = 0.68
+
+
+#t-Test für die Unterskalen:
+t.test(data$PDS1Intrusionen, data$PDS2Intrusionen, alternative="greater", paired = TRUE)
+cohensD(data$PDS1Intrusionen, data$PDS2Intrusionen, method = "paired")
+t.test(data$PDS1Vermeidung, data$PDS2Vermeidung, alternative="greater", paired = TRUE)
+cohensD(data$PDS1Vermeidung, data$PDS2Vermeidung, method = "paired")
+t.test(data$PDS1Hyperarousal, data$PDS2Hyperarousal, alternative="greater", paired = TRUE)
+cohensD(data$PDS1Hyperarousal, data$PDS2Hyperarousal, method = "paired")
+
+
+
+
+
+## ITQ PTBS-Wert
+describe(data$PTBS1)
+describe(data$PTBS2) 
+describe(data$ITQ1Wiedererleben)
+describe(data$ITQ2Wiedererleben)
+describe(data$ITQ1Vermeidung)
+describe(data$ITQ2Vermeidung)
+describe(data$ITQ1GefuehlBedrohung)
+describe(data$ITQ2GefuehlBedrohung)
+
+
+
+
+#t-test für abhängige Stichproben
+t.test(data$PTBS1, data$PTBS2, alternative="greater", paired = TRUE) 
+
+
+#t-Test für PTBS ohne Ausreisser (1)
+PTBSohneAusreisser <- data[-c(5), ]
+summary(PTBSohneAusreisser)
+mean(PTBSohneAusreisser$PTBS1)
+sd(PTBSohneAusreisser$PTBS1)
+mean(PTBSohneAusreisser$PTBS2)
+sd(PTBSohneAusreisser$PTBS2)
+
+t.test(PTBSohneAusreisser$PTBS1, PTBSohneAusreisser$PTBS2, alternative="greater", paired = TRUE)
+cohensD(PTBSohneAusreisser$PTBS1, PTBSohneAusreisser$PTBS2, method = "paired") 
+
+
+#Nonparametrischer t-Test für ITQ Vermeidung, DSO und Affektive Dysregulation, da Normalverteilung verletzt
+install.packages("coin")
+library(coin)
+
+wilcox.test(data$ITQ1Vermeidung,data$ITQ2Vermeidung, paired = TRUE, alternative="greater", conf.int =TRUE, exact =TRUE)
+wilcox.test(data$DSO1,data$DSO2, paired = TRUE, alternative = "greater")
+wilcox.test(data$ITQ1AffektiveDysregulation,data$ITQ2AffektiveDysregulation, paired = TRUE, alternative = "greater")
+wilcox.test(data$ITQ1GefuehlBedrohung,data$ITQ2GefuehlBedrohung, paired = TRUE, alternative = "greater")
+
+#VERMEIDUNG
+wilcoxsign_test(ITQ1Vermeidung ~ ITQ2Vermeidung, data=data, alternative="greater",
+                distribution="exact")
+
+
+#Vermeidung ohne Ausreisser
+V<- data[-c(5,6,17,20,33,36,37), ]
+
+mean(V$ITQ1Vermeidung)
+sd(V$ITQ1Vermeidung)
+mean(V$ITQ2Vermeidung)
+sd(V$ITQ2Vermeidung)
+
+wilcoxsign_test(ITQ1Vermeidung ~ ITQ2Vermeidung, data=V, alternative="greater",
+                distribution="exact")
+
+
+
+#Wilcoxon-Test DSO ohne Ausreisser (1)
+DSOohneAusreisser <- data[-c(27), ]
+mean(DSOohneAusreisser$DSO1)
+sd(DSOohneAusreisser$DSO1)
+mean(DSOohneAusreisser$DSO2)
+sd(DSOohneAusreisser$DSO2)
+
+wilcoxsign_test(DSO1 ~ DSO2, data=data, alternative="greater",
+                distribution="exact")
+wilcoxsign_test(DSO1 ~ DSO2, data=DSOohneAusreisser, alternative="greater",
+                distribution="exact")
+
+#Negatives Selbstbild ohne Ausreisser
+NSohneAusreisser <- data[-c(27), ]
+mean(NSohneAusreisser$ITQ1NegativesSelbstbild)
+sd(NSohneAusreisser$ITQ1NegativesSelbstbild)
+mean(NSohneAusreisser$ITQ2NegativesSelbstbild)
+sd(NSohneAusreisser$ITQ2NegativesSelbstbild)
+
+t.test(NSohneAusreisser$ITQ1NegativesSelbstbild, NSohneAusreisser$ITQ2NegativesSelbstbild, alternative="greater", paired = TRUE)
+cohensD(NSohneAusreisser$ITQ1NegativesSelbstbild, NSohneAusreisser$ITQ2NegativesSelbstbild, method = "paired") 
+
+
+#VORZEICHENTEST FÜR ITQ VERMEIDUNG, DA 7 AUSREISSER 
+D <- na.omit(data$ITQ1Vermeidung - data$ITQ2Vermeidung)
+T.pos.k <- T.pos <- sum(sign(D)>0)
+T.neg.k <- T.neg <- sum(sign(D)<0)
+T.0 <- sum(sign(D)==0)
+if (T.0 != 0) {
+  if (T.0 %% 2 ==0) {
+    T.pos.k <- T.pos + .5*T.0
+    T.neg.k <- T.neg + .5*T.0
+  } else {
+    T.pos.k<- T.pos + .5*(T.0-1)
+    T.neg.k<- T.neg + .5*(T.0-1)}}
+
+p <- pbinom(q=min(T.pos.k, T.neg.k), size= T.pos.k + T.neg.k,
+            prob=.5); paste("Einseitiger p-Wert =", p)
+
+#Effektstärke
+cohensD(data$PTBS1, data$PTBS2, method = "paired") #0.32
+
+
+#Unterskalen t-Tests
+t.test(data$ITQ1Wiedererleben, data$ITQ2Wiedererleben, alternative="greater", paired = TRUE) 
+cohensD(data$ITQ1Wiedererleben, data$ITQ2Wiedererleben, method = "paired") 
+t.test(data$ITQ1Vermeidung, data$ITQ2Vermeidung, alternative="greater", paired = TRUE) 
+cohensD(data$ITQ1Vermeidung, data$ITQ2Vermeidung, method = "paired") 
+t.test(data$ITQ1GefuehlBedrohung, data$ITQ2GefuehlBedrohung, alternative="greater", paired = TRUE) 
+cohensD(data$ITQ1GefuehlBedrohung, data$ITQ2GefuehlBedrohung, method = "paired") 
+
+
+
+## ITQ DSO-Wert
+describe(data$DSO1)
+describe(data$DSO2)
+describe(data$ITQ1AffektiveDysregulation)
+describe(data$ITQ2AffektiveDysregulation)
+describe(data$ITQ1NegativesSelbstbild)
+describe(data$ITQ2NegativesSelbstbild)
+describe(data$ITQ1ProblematischeBeziehungen)
+describe(data$ITQ2ProblematischeBeziehungen)
+
+
+#t-test für abhängige Stichproben
+tDSO<- t.test(data$DSO1, data$DSO2, alternative="greater", paired = TRUE) 
+tDSO
+
+
+#Effektstärke
+cohensD(data$DSO1, data$DSO2, method = "paired") #0.15
+
+#Unterskalen t-Test
+t.test(data$ITQ1AffektiveDysregulation, data$ITQ2AffektiveDysregulation, alternative="greater", paired = TRUE) 
+cohensD(data$ITQ1AffektiveDysregulation, data$ITQ2AffektiveDysregulation, method = "paired") 
+t.test(data$ITQ1NegativesSelbstbild, data$ITQ2NegativesSelbstbild, alternative="greater", paired = TRUE)
+cohensD(data$ITQ1NegativesSelbstbild, data$ITQ2NegativesSelbstbild, method = "paired") 
+t.test(data$ITQ1ProblematischeBeziehungen, data$ITQ2ProblematischeBeziehungen, alternative="greater", paired = TRUE) 
+cohensD(data$ITQ1ProblematischeBeziehungen, data$ITQ2ProblematischeBeziehungen, method = "paired") 
+
+
+##Ausreisseranalyse für ITQ-Werte:
+#PTBS-Wert:
+StreudiagrammPTBS
+range(data$PTBS1) #3-24
+range(data$PTBS2) #6-24
+
+
+
+
+   
+### Hypothese 2: Je grösser die Reduktion der Traumasymptomatik von Klinikeintritt zu 
+#-austritt, desto kleiner die Rückfallhäufigkeit 6 Monate nach Klinikaustritt. 
+
+barplot(table(katamnese$Konsumrueckfall)) #nur Responder
+barplot(table(data$Konsumrückfall)) #mit Non-Respondern
+
+
+(myCountRueckfall <- dplyr::count(data, Konsumrückfall))
+# Füge Spalte mit Name hinzu
+myCountRueckfall$name <- c("Ja", "Nein", "Non-Respond")
+# Gebe myCountRueckfall in R Konsole aus
+myCountRueckfall
+# Verwende neue Spalte, um ggplot Funktion zu befehlen, dies als Grundlage der x-Achse Tickmarks zu nehmen:
+myCountRueckfall %>%
+  ggplot(aes(x=name, y=n)) +
+  geom_bar(stat="identity")
+
+myCountRueckfall %>%
+  ggplot(aes(x=name, y=n)) +
+  geom_bar(stat="identity") +
+  xlab(label="Konsumrückfall") +
+  ylab(label="Anzahl")
+
+myCountRueckfall$prozentFormatiert <- paste0(myCountRueckfall$prozent, "%")
+myCountRueckfall %>%
+  ggplot(aes(x=name, y=n)) +
+  geom_bar(stat="identity", fill="blue") +
+  xlab(label="Rückfall") +
+  ylab(label="Anzahl") +
+  theme(
+    panel.background = element_blank(),
+    axis.text.x=element_text(size=11),
+    axis.title.x=element_text(size=11),
+    axis.text.y=element_text(size=11),
+    axis.title.y = element_text(size=11),
+    panel.border = element_rect(color="black", fill=NA)) +
+  geom_text(aes(label=n), vjust=-0.3, size=4) +
+  geom_text(aes(label=prozentFormatiert), vjust=2, size=4)
+
+table(NonresponderData$Konsumrückfall)
+
+
+#PDS mit Non-Respondern
+
+#X2-Test
+#neue Spalte einfügen mit Kategorien, wenn Rückgang im PDS-Wert
+data <- mutate(data, PDSKatamnese = case_when(data$DifferenzPDS < 0 ~ '1', #Reduktion der Werte
+                                              data$DifferenzPDS > 0 |data$DifferenzPDS == 0|data$Konsumrückfall == is.na(NA) ~'0')) #kein Unterschied
+                                              
+table(data$PDSKatamnese)
+
+chisq.test(x=data$PDSKatamnese, p=data$Konsumrückfall)
+
+
+#oder logistische Regression, da X2 keine Richtung der Hypothese zulässt?
+logReg1 <- glm(PDSKatamnese ~ Konsumrückfall, data=data, family=gaussian())
+summary(logReg1)
+
+
+##NON-Responder auschgeschlossen --> n = 21
+
+#neues Datenframe ohn die Non-Respondern
+
+view(NonresponderData)
+describe(NonresponderData)
+table(NonresponderData$Geschlecht) #0=männlich
+table(NonresponderData$Aufenthaltsart)
+table(NonresponderData$Diagnose)
+table(NonresponderData$Traumaerfahrung)
+table(NonresponderData$Hauptsubstanz)
+table(NonresponderData$Zivilstand)
+with(NonresponderData, table(Traumaerfahrung, Geschlecht))
+
+chisq.test(x=NonresponderData$PDSKatamnese, p=NonresponderData$Konsumrückfall)
+
+
+
+
+
+### Hypothese 3: Je grösser die Reduktion der Traumasymptomatik von Klinikeintritt zu 
+#-austritt, desto grösser auch die Reduktion der psychsichen Belastung. 
+
+
+t.test(data$GSI1, data$GSI2, alternative="greater", paired = TRUE)
+t.test(data$BSCL1Aengstlichkeit, data$BSCL2Aengstlichkeit, alternative="greater", paired = TRUE)
+t.test(data$BSCL1Somatisierung, data$BSCL2Somatisierung, alternative="greater", paired = TRUE)
+t.test(data$BSCL1Zwanghaftigkeit, data$BSCL2Zwanghaftigkeit, alternative="greater", paired = TRUE)
+t.test(data$BSCL1Aggressivitaet, data$BSCL2Aggressivitaet, alternative="greater", paired = TRUE)
+t.test(data$BSCL1Depressivitaet, data$BSCL2Depressivitaet, alternative="greater", paired = TRUE)
+t.test(data$BSCL1Psychotizismus, data$BSCL2Psychotizismus, alternative="greater", paired = TRUE)
+t.test(data$BSCL1PhobischeAngst, data$BSCL2PhobischeAngst, alternative="greater", paired = TRUE)
+t.test(data$BSCL1ParanoidesDenken, data$BSCL2ParanoidesDenken, alternative="greater", paired = TRUE)
+t.test(data$BSCL1UnsicherheitSozialkontakt, data$BSCL2UnsicherheitSozialkontakt, alternative="greater", paired = TRUE)
+
+
+
+#PDS
+
+plot(data$DifferenzPDS, data$DifferenzGSI,
+     main = 'Zusammenhang zwischen PDS und BSCL',
+     xlab = 'PDS',
+     ylab = 'GSI')
+
+cor.test(x=data$DifferenzPDS, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+
+#Unterskalen
+
+#PDS-Intrusionen 
+cor.test(x=data$DifferenzPDSIntrusionen, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+
+#PDS-Vermeidung:
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+#PDS-Hyperarousal
+cor.test(x=data$DifferenzPDSHyperarousal, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+
+
+#PTBBS
+
+plot(data$DifferenzPTBS, data$DifferenzGSI,
+     main = 'Zusammenhang zwischen PTBS und BSCL',
+     xlab = 'PTBS',
+     ylab = 'GSI')
+
+cor.test(x=data$DifferenzPTBS, y=data$DifferenzGSI, alternative="greater",
+                method="pearson", conf.level=.95)
+
+
+
+#Unterskalen
+
+#ITQ-Wiedererleben
+cor.test(x=data$DifferenzITQWiedererleben, y=data$DifferenzGSI, alternative="greater",
+        method="pearson", conf.level=.95)
+
+#ITQ-Vermeidung
+cor.test(x=data$DifferenzITQVermeidung, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+#ITQ-GefühlBedrohung
+cor.test(x=data$DifferenzITQGefuehlBedrohung, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+
+#DSO
+
+plot(data$DifferenzDSO, data$DifferenzGSI,
+     main = 'Zusammenhang zwischen PDS und BSCL',
+     xlab = 'DSO',
+     ylab = 'GSI')
+
+cor.test(x=data$DifferenzDSO, y=data$DifferenzGSI, alternative="greater",
+               method="pearson", conf.level=.95)
+
+
+#Unterskalen
+
+#ITQ-AffektiveDysregulation
+cor.test(x=data$DifferenzITQAffektiveDysregulation, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+#ITQ-NegativesSelbstbild
+cor.test(x=data$DifferenzITQNegativesSelbstbild, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+#ITQ-ProblematischeBeziehungen
+cor.test(x=data$DifferenzITQProblematischeBeziehungen, y=data$DifferenzGSI, alternative="greater",
+         method="pearson", conf.level=.95)
+
+
+
+
+#Spearman Korrelation
+cor.test(x=data$DifferenzITQAffektiveDysregulation, y=data$DifferenzGSI, alternative="greater",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzITQNegativesSelbstbild, y=data$DifferenzGSI, alternative="greater",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzDSO, y=data$DifferenzGSI, alternative="greater",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzITQVermeidung, y=data$DifferenzGSI, alternative="greater",
+         method="spearman", conf.level=.95)
+
+
+
+
+
+#Graphik für Einfluss von Aufenthaltsdauer auf die Wirksamkeit
+
+plot(data$DifferenzPDS,data$Aufenthaltsdauer, xlab="Differenz SSS", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzPDS, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzPDSIntrusionen,data$Aufenthaltsdauer, xlab="Differenz PDS Intrusionen", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzPDSIntrusionen, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzPDSVermeidung,data$Aufenthaltsdauer, xlab="Differenz PDS Vermeidung", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzPDSHyperarousal,data$Aufenthaltsdauer, xlab="Differenz PDS Hyperarousal", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzPDSHyperarousal, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+
+
+plot(data$DifferenzPTBS,data$Aufenthaltsdauer, xlab="Differenz PTBS", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzPTBS, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzITQVermeidung,data$Aufenthaltsdauer, xlab="Differenz ITQ Vermeidung", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzITQVermeidung, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzITQWiedererleben,data$Aufenthaltsdauer, xlab="Differenz ITQ Wiedererleben", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzITQWiedererleben, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzITQGefuehlBedrohung,data$Aufenthaltsdauer, xlab="Differenz ITQ Gefühl von Bedrohung", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzITQGefuehlBedrohung, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+
+plot(data$DifferenzDSO,data$Aufenthaltsdauer, xlab="Differenz DSO", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzDSO, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzITQAffektiveDysregulation,data$Aufenthaltsdauer, xlab="Differenz TIQ Affektive Dysregulation", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzITQAffektiveDysregulation, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzITQNegativesSelbstbild,data$Aufenthaltsdauer, xlab="Differenz ITQ Negatives Selbstbild", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzITQNegativesSelbstbild, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+plot(data$DifferenzITQProblematischeBeziehungen,data$Aufenthaltsdauer, xlab="Differenz ITQ Problematische Beziehungen", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzITQProblematischeBeziehungen, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+
+
+plot(data$DifferenzGSI,data$Aufenthaltsdauer, xlab="Differenz GSI", ylab="Aufenthaltsdauer", 
+     main="Streudiagramm", 
+     cex=1.0, pch=16, cex.axis=1.50, cex.lab=1.50, cex.main=1.50)
+cor.test(x=data$DifferenzGSI, y=data$Aufenthaltsdauer, alternative="greater",
+         method="pearson", conf.level=.95)
+
+table(data$Diagnose)
+aggregate(data$GSI2, list(data$Diagnose), FUN=mean)
+aggregate(data$GSI1, list(data$Diagnose), FUN=mean)
+aggregate(data$DifferenzGSI, list(data$Diagnose), FUN=mean)
+
+
+##Graphik Diagnose und Aufenthaltsdauer
+aggregate(data$Aufenthaltsdauer, list(data$Diagnose), FUN=mean)
+
+
+
+
+#Korrelation zwischen Variablen PDS ITQ
+cor.test(x=V$DifferenzPDSVermeidung, y=V$DifferenzITQVermeidung, alternative="greater",
+         method="pearson", conf.level=.95)
+
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzITQVermeidung, alternative="greater",
+         method="pearson", conf.level=.95)
+
+#Vermeidung nicht normalverteilt --> Spearman Korrelation
+
+cor.test(x=V$DifferenzPDSVermeidung, y=V$DifferenzITQVermeidung, alternative="greater",
+         method="spearman", conf.level=.95)
+
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzITQVermeidung, alternative="greater",
+         method="spearman", conf.level=.95)
+
+
+#korrelation spearmean mit aufenthaltsdauer 
+cor.test(x=data$DifferenzITQVermeidung, y=data$Aufenthalt, alternative="greater",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzDSO, y=data$Aufenthalt, alternative="greater",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzITQNegativesSelbstbild, y=data$Aufenthalt, alternative="greater",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzITQAffektiveDysregulation, y=data$Aufenthalt, alternative="greater",
+         method="spearman", conf.level=.95)
+
+
+
+#Vermeidung PDS mit unterskalen GSI
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLSomatisierung, alternative="two.sided",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLDepressivitaet, alternative="two.sided",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLZwanghaftigkeit, alternative="two.sided",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLAengstlichkeit, alternative="two.sided",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLAgressivitätt, alternative="two.sided",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLParanoidesDenken, alternative="two.sided",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLPsychotizismus, alternative="two.sided",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLPhobischeAngst, alternative="two.sided",
+         method="spearman", conf.level=.95)
+cor.test(x=data$DifferenzPDSVermeidung, y=data$DifferenzBSCLUnsicherheitSozialkontakt, alternative="two.sided",
+         method="spearman", conf.level=.95)
+
+
+
+#Diskussion; wie viele haben kPTBS von den 20 Personen mit keinem Unterschied oder höheren Schweregrad
+Data20 <- data[-c(1,3,6,7,9,12,14,15,16,22,26,28,29,30,33,34,35,36,38,39), ]
+
+table(Data20$Diagnose)
+
+
+
+
